@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify
 import RPi.GPIO as GPIO
-import time  # Для задержки
+import time
+import threading  # Для выполнения функции с задержкой в отдельном потоке
 
 # Настройки GPIO
 LED_PIN = 17
@@ -9,6 +10,11 @@ GPIO.setup(LED_PIN, GPIO.OUT)
 
 # Создание веб-приложения Flask
 app = Flask(__name__)
+
+# Функция для задержки 5 секунд и выключения LED
+def turn_off_after_delay():
+    time.sleep(5)
+    GPIO.output(LED_PIN, GPIO.LOW)
 
 @app.route('/')
 def home():
@@ -22,7 +28,8 @@ def toggle():
         # Включаем LED
         GPIO.output(LED_PIN, GPIO.HIGH)
         state = True
-        # Обновляем состояние сразу
+        # Запускаем функцию для выключения через 5 секунд
+        threading.Thread(target=turn_off_after_delay).start()
         return jsonify({'state': state})
     else:
         # Выключаем LED, если он уже включен
