@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление LED</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        button {
+            font-size: 20px;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .on {
+            background-color: green;
+            color: white;
+        }
+        .off {
+            background-color: red;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Управление LED на Raspberry Pi</h1>
+    <button id="toggleBtn" class="{{ 'on' if state else 'off' }}" onclick="toggleLED()">
+        {{ 'ВЫКЛЮЧИТЬ' if state else 'ВКЛЮЧИТЬ' }}
+    </button>
+
+    <script>
+        function toggleLED() {
+            fetch('/toggle', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    let btn = document.getElementById("toggleBtn");
+                    if (data.state) {
+                        btn.textContent = "ВЫКЛЮЧИТЬ";
+                        btn.className = "on";
+                    } else {
+                        btn.textContent = "ВКЛЮЧИТЬ";
+                        btn.className = "off";
+                    }
+                });
+        }
+    </script>
+
+</body>
+</html>
