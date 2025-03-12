@@ -19,14 +19,16 @@ def home():
 def toggle():
     state = GPIO.input(LED_PIN)
     if not state:
-        # Включаем LED и сразу меняем индикацию на веб-странице
+        # Включаем LED
         GPIO.output(LED_PIN, GPIO.HIGH)
         state = True
-        # Ждем 5 секунд, затем выключаем
-        time.sleep(5)
+        # Обновляем состояние сразу
+        return jsonify({'state': state})
+    else:
+        # Выключаем LED, если он уже включен
         GPIO.output(LED_PIN, GPIO.LOW)
         state = False
-    return jsonify({'state': state})
+        return jsonify({'state': state})
 
 @app.route('/turn_off', methods=['POST'])
 def turn_off():
