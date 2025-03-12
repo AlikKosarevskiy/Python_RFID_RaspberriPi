@@ -1,5 +1,6 @@
 from flask import Flask, render_template, jsonify
 import RPi.GPIO as GPIO
+import time  # Для задержки
 
 # Настройки GPIO
 LED_PIN = 17
@@ -17,8 +18,12 @@ def home():
 @app.route('/toggle', methods=['POST'])
 def toggle():
     state = GPIO.input(LED_PIN)
-    GPIO.output(LED_PIN, not state)  # Переключаем состояние
-    return jsonify({'state': not state})  # Отправляем новое состояние в JS
+    if not state:
+        GPIO.output(LED_PIN, GPIO.HIGH)  # Включаем LED
+        time.sleep(5)  # Ждем 5 секунд
+        GPIO.output(LED_PIN, GPIO.LOW)  # Выключаем LED
+        state = False  # Обновляем состояние после задержки
+    return jsonify({'state': state})  # Отправляем новое состояние в JS
 
 if __name__ == '__main__':
     try:
