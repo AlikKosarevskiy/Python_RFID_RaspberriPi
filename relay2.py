@@ -91,7 +91,7 @@ while True:
             cl.close()
             time.sleep(3)  # Держим LED включенным 3 секунды
             led.value(0)  # Выключаем LED
-            ledState = "LED is OFF"
+            ledState = "LED is OFF" #
 
         if relay_off == 6:
             print("relay off")
