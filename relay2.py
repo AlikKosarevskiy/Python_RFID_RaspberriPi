@@ -85,7 +85,11 @@ while True:
             led.value(1)
             relayState = "Relay is ON"
             ledState = "LED is ON"
-            time.sleep(2)  # Держим LED включенным 2 секунды
+            response = html % (relayState, ledState)
+            cl.send('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
+            cl.send(response)
+            cl.close()
+            time.sleep(3)  # Держим LED включенным 3 секунды
             led.value(0)  # Выключаем LED
             ledState = "LED is OFF"
 
@@ -95,7 +99,7 @@ while True:
             led.value(0)
             relayState = "Relay is OFF"
             ledState = "LED is OFF"
-            
+        
         response = html % (relayState, ledState)
         cl.send('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
         cl.send(response)
