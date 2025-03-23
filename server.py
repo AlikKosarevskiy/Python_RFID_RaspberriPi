@@ -52,12 +52,25 @@ def index():
                     margin-top: 20px;
                 }}
             </style>
+            <script>
+                function sendMessage() {{
+                    fetch('/send_message', {{
+                        method: 'POST',
+                        headers: {{
+                            'Content-Type': 'application/json',
+                        }},
+                        body: JSON.stringify({{ message: 'ON' }})
+                    }}).then(response => {{
+                        if (response.ok) {{
+                            document.getElementById("indicator").style.backgroundColor = 'green'; // Обновить индикатор
+                        }}
+                    }});
+                }}
+            </script>
         </head>
         <body>
             <h1>Control Relay</h1>
-            <form method="POST" action="/send_message">
-                <button type="submit">Turn ON</button>
-            </form>
+            <button onclick="sendMessage()">Turn ON</button>
             <div id="indicator"></div>
         </body>
     </html>
@@ -66,9 +79,9 @@ def index():
 
 @app.route('/send_message', methods=['POST'])
 def send_message():
-    # Отправляем сообщение "ON" на MQTT топик
+    # Получаем сообщение из тела запроса (для дальнейшей обработки можно использовать)
     client.publish(MQTT_TOPIC_CONTROL, "ON")
-    return "<h1>Message sent: ON</h1>"
+    return '', 200  # Возвращаем пустой ответ, чтобы избежать перехода
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
