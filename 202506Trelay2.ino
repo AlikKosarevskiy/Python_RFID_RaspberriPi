@@ -24,10 +24,13 @@ IPAddress local_IP(192, 168, 0, 101);
 IPAddress gateway(192, 168, 0, 1);
 IPAddress subnet(255, 255, 255, 0);
 
-// Переменные для управления таймером
+// Переменные для таймера
 bool relaysOn = false;
 unsigned long relayOnTime = 0;
 const unsigned long RELAY_DURATION = 10000; // 10 секунд
+
+// Для периодического извещения
+unsigned long lastStatusSent = 0;
 
 void publishStatus(bool state) {
   if (state) {
@@ -58,7 +61,8 @@ void setRelayState(bool state) {
   }
   relaysOn = state;
   if (state) {
-    relayOnTime = millis(); // Сохраняем время включения
+    relayOnTime = millis();
+    lastStatusSent = 0;  // сброс для начала отсчета
   }
   publishStatus(state);
 }
@@ -74,9 +78,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println(message);
 
   if (message == "ON") {
-    setRelayState(true); // включаем реле
+    setRelayState(true);
   } else if (message == "OFF") {
-    setRelayState(false); // выключаем досрочно
+    setRelayState(false);
   }
 }
 
@@ -112,9 +116,26 @@ void loop() {
   }
   client.loop();
 
-  // Автоматическое выключение через 10 сек
-  if (relaysOn && (millis() - relayOnTime >= RELAY_DURATION)) {
-    Serial.println("Таймер истёк — выключаю реле");
-    setRelayState(false);
+  // Управление таймером и уведомлениями
+  if (relaysOn) {
+    unsigned long elapsed = millis() - relayOnTime;
+    
+    // Уведомление каждую секунду
+    if (millis() - lastStatusSent >= 1000) {
+      int remaining = (RELAY_DURATION - elapsed) / 1000;
+      if (remaining >= 0) {
+        char msg[32];
+        snprintf(msg, sizeof(msg), "Remaining: %d", remaining);
+        client.publish(topic_status, msg);
+        Serial.println(msg);
+        lastStatusSent = millis();
+      }
+    }
+
+    // Выключение после 10 секунд
+    if (elapsed >= RELAY_DURATION) {
+      Serial.println("Таймер истёк — выключаю реле");
+      setRelayState(false);
+    }
   }
 }
