@@ -1,0 +1,50 @@
+#include <Arduino.h>
+#include <PubSubClient.h>
+#include <WiFi.h>
+
+// put function declarations here:
+int myFunction(int, int);
+
+void setup() {
+  // put your setup code here, to run once:
+  int result = myFunction(2, 3);
+ // initialize digital pin LED_BUILTIN as an output.
+  pinMode(GPIO_NUM_5, OUTPUT);
+  pinMode(GPIO_NUM_18, OUTPUT);
+  pinMode(GPIO_NUM_19, OUTPUT);
+  pinMode(GPIO_NUM_21, OUTPUT);
+
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+  digitalWrite(GPIO_NUM_5, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(1000);                       // wait for a second
+  digitalWrite(GPIO_NUM_5, LOW);    // turn the LED off by making the voltage LOW
+  delay(1000); 
+
+  digitalWrite(GPIO_NUM_18, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(1000);                       // wait for a second
+  digitalWrite(GPIO_NUM_18, LOW);    // turn the LED off by making the voltage LOW
+  delay(1000); 
+
+  digitalWrite(GPIO_NUM_19, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(1000);                       // wait for a second
+  digitalWrite(GPIO_NUM_19, LOW);    // turn the LED off by making the voltage LOW
+  delay(1000);
+  digitalWrite(GPIO_NUM_21, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(1000);                       // wait for a second
+  digitalWrite(GPIO_NUM_21, LOW);    // turn the LED off by making the voltage LOW
+  delay(1000);
+  
+}
+
+// put function definitions here:
+int myFunction(int x, int y) {
+  return x + y;
+}
+
+
+   
