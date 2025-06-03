@@ -39,50 +39,76 @@ def handle_connect():
 
 @app.route('/')
 def index():
-    html = """
+    html = f"""
     <html>
-        <head>
-            <title>MQTT Button</title>
-            <style>
-                #indicator {
-                    width: 50px;
-                    height: 50px;
-                    border-radius: 50%;
-                    background-color: red; /* По умолчанию красный */
-                    margin-top: 20px;
-                }
-            </style>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
-            <script>
-                var socket = io();
+    <head>
+        <title>MQTT Button</title>
+        <style>
+            #indicator {{
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                background-color: {indicator_color};
+                margin-top: 20px;
+            }}
+            #log {{
+                margin-top: 20px;
+                border: 1px solid #ccc;
+                padding: 10px;
+                width: 300px;
+                height: 150px;
+                overflow-y: auto;
+                background: #f9f9f9;
+                font-family: monospace;
+                font-size: 14px;
+            }}
+        </style>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+        <script>
+            var socket = io();
 
-                socket.on('status_update', function(data) {
-                    var indicator = document.getElementById('indicator');
-                    if (data.status == 'ON') {
-                        indicator.style.backgroundColor = 'green';
-                    } else {
-                        indicator.style.backgroundColor = 'red';
-                    }
-                });
+            socket.on('status_update', function(data) {{
+                var indicator = document.getElementById('indicator');
+                if (data.status == 'ON') {{
+                    indicator.style.backgroundColor = 'green';
+                }} else {{
+                    indicator.style.backgroundColor = 'red';
+                }}
 
-                function sendMessage(command) {
-                    fetch('/send_message', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ message: command })
-                    });
-                }
-            </script>
-        </head>
-        <body>
-            <h1>Control Relay</h1>
-            <button onclick="sendMessage('ON')">Turn ON</button>
-            <button onclick="sendMessage('OFF')">Turn OFF</button>
-            <div id="indicator"></div>
-        </body>
-    </html>
+                // Вывод сообщения в лог
+                var log = document.getElementById('log');
+                var line = document.createElement('div');
+                line.textContent = "MQTT: " + data.status + " (" + new Date().toLocaleTimeString() + ")";
+                log.appendChild(line);
+                log.scrollTop = log.scrollHeight;
+            }});
+
+            function sendMessage(msg) {{
+                fetch('/send_message', {{
+                    method: 'POST',
+                    headers: {{
+                        'Content-Type': 'application/json',
+                    }},
+                    body: JSON.stringify({{ message: msg }})
+                }}).then(response => {{
+                    if (response.ok && msg == 'ON') {{
+                        document.getElementById("indicator").style.backgroundColor = 'green';
+                    }} else if (response.ok && msg == 'OFF') {{
+                        document.getElementById("indicator").style.backgroundColor = 'red';
+                    }}
+                }});
+            }}
+        </script>
+    </head>
+    <body>
+        <h1>Control Relay</h1>
+        <button onclick="sendMessage('ON')">Turn ON</button>
+        <button onclick="sendMessage('OFF')">Turn OFF</button>
+        <div id="indicator"></div>
+        <h3>Последние сообщения MQTT:</h3>
+        <div id="log"></div>
+    </body>
+</html>
     """
     return render_template_string(html)
 
