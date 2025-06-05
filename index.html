@@ -1,66 +1,68 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Управление LED</title>
+    <title>MQTT Relay Control</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-        button {
-            font-size: 20px;
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .on {
-            background-color: green;
-            color: white;
-        }
-        .off {
+        .circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
             background-color: red;
-            color: white;
+            margin-bottom: 10px;
+        }
+        #status-text {
+            font-size: 1.2em;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
+    <h1>Управление реле</h1>
 
-    <h1>Управление LED на Raspberry Pi</h1>
-    <button id="toggleBtn" class="{{ 'on' if state else 'off' }}" onclick="toggleLED()">
-        {{ 'ВЫКЛЮЧИТЬ' if state else 'ВКЛЮЧИТЬ' }}
-    </button>
-    <button id="offBtn" class="off" onclick="turnOffLED()">ВЫКЛЮЧИТЬ НЕМЕДЛЕННО</button>
+    <div class="circle" id="status-circle"></div>
+    <div id="status-text">Ожидание...</div>
 
+    <button onclick="sendMessage('ON')">ON</button>
+    <button onclick="sendMessage('OFF')">OFF</button>
+
+    <script src="{{ url_for('static', filename='paho-mqtt.js') }}"></script>
     <script>
-        function toggleLED() {
-            fetch('/toggle', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    let btn = document.getElementById("toggleBtn");
-                    if (data.state) {
-                        btn.textContent = "ВЫКЛЮЧИТЬ";
-                        btn.className = "on";
-                    } else {
-                        btn.textContent = "ВКЛЮЧИТЬ";
-                        btn.className = "off";
-                    }
-                });
-        }
+        var client = new Paho.MQTT.Client("192.168.0.105", Number(8083), "clientId-web");
 
-        function turnOffLED() {
-            fetch('/turn_off', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    let btn = document.getElementById("toggleBtn");
-                    btn.textContent = "ВКЛЮЧИТЬ";
-                    btn.className = "off";
-                });
+        client.onConnectionLost = function (responseObject) {
+            console.log("Connection lost: " + responseObject.errorMessage);
+        };
+
+        client.onMessageArrived = function (message) {
+            console.log("Message arrived: " + message.payloadString);
+            var circle = document.getElementById("status-circle");
+            var text = document.getElementById("status-text");
+            if (message.payloadString === "ON") {
+                circle.style.backgroundColor = "green";
+                text.textContent = "Состояние: ВКЛЮЧЕНО";
+            } else if (message.payloadString === "OFF") {
+                circle.style.backgroundColor = "red";
+                text.textContent = "Состояние: ВЫКЛЮЧЕНО";
+            } else {
+                text.textContent = "Сообщение: " + message.payloadString;
+            }
+        };
+
+        client.connect({
+            onSuccess: function () {
+                console.log("Connected to MQTT broker");
+                client.subscribe("/relay/status");
+            },
+            onFailure: function (err) {
+                console.error("Failed to connect:", err.errorMessage);
+            }
+        });
+
+        function sendMessage(command) {
+            var message = new Paho.MQTT.Message(command);
+            message.destinationName = "/relay/status";
+            client.send(message);
         }
     </script>
-
 </body>
 </html>
