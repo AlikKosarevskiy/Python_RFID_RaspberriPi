@@ -28,6 +28,7 @@ IPAddress subnet(255, 255, 255, 0);
 bool relaysOn = false;
 unsigned long relayOnTime = 0;
 const unsigned long RELAY_DURATION = 10000; // 10 секунд
+int duration = 10000; // по умолчанию 10 сек
 
 // Для периодического извещения
 unsigned long lastStatusSent = 0;
@@ -67,20 +68,51 @@ void setRelayState(bool state) {
   publishStatus(state);
 }
 
+// void callback(char* topic, byte* payload, unsigned int length) {
+//   String message;
+//   for (unsigned int i = 0; i < length; i++) {
+//     message += (char)payload[i];
+//   }
+
+//   message.trim();
+//   Serial.print("Получено сообщение: ");
+//   Serial.println(message);
+
+//   if (message == "ON") {
+//     setRelayState(true);
+//   } else if (message == "OFF") {
+//     setRelayState(false);
+//   }
+// }
+
 void callback(char* topic, byte* payload, unsigned int length) {
   String message;
-  for (unsigned int i = 0; i < length; i++) {
-    message += (char)payload[i];
-  }
+  for (int i = 0; i < length; i++) message += (char)payload[i];
 
   message.trim();
   Serial.print("Получено сообщение: ");
   Serial.println(message);
 
-  if (message == "ON") {
+  if (message.startsWith("ON")) {
+    // int duration = 10000; // по умолчанию 10 сек
+
+    if (message.indexOf(":") > 0) {
+      duration = message.substring(message.indexOf(":") + 1).toInt() * 1000;
+    }
+
+    // digitalWrite(RELAY_PIN, HIGH);
     setRelayState(true);
-  } else if (message == "OFF") {
+    client.publish("/relay/status", "Включено");
+    // delay(duration);
+    // // digitalWrite(RELAY_PIN, LOW);
+    // setRelayState(false);
+    // client.publish("/relay/status", "Выключено");
+  }
+
+  else if (message == "OFF") {
+    // digitalWrite(RELAY_PIN, LOW);
     setRelayState(false);
+    client.publish("/relay/status", "Выключено принудительно");
   }
 }
 
@@ -122,7 +154,8 @@ void loop() {
     
     // Уведомление каждую секунду
     if (millis() - lastStatusSent >= 1000) {
-      int remaining = (RELAY_DURATION - elapsed) / 1000;
+      // int remaining = (RELAY_DURATION - elapsed) / 1000;
+      int remaining = (duration - elapsed) / 1000;
       if (remaining >= 0) {
         char msg[32];
         snprintf(msg, sizeof(msg), "Remaining: %d", remaining);
@@ -133,7 +166,8 @@ void loop() {
     }
 
     // Выключение после 10 секунд
-    if (elapsed >= RELAY_DURATION) {
+    // if (elapsed >= RELAY_DURATION) {
+    if (elapsed >= duration) {
       Serial.println("Таймер истёк — выключаю реле");
       setRelayState(false);
     }
