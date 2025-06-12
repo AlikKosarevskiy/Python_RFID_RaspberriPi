@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>MQTT Relay Control</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        .status-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: red;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        #status-text {
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .mqtt-status {
+            margin-top: 30px;
+            font-size: 0.95em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Управление Реле (MQTT)</h1>
+
+    <div class="status-container">
+        <div class="circle" id="status-circle"></div>
+        <div id="status-text">Ожидание...</div>
+    </div>
+
+    <div class="button-group">
+        <button onclick="sendMessage('ON')">ВКЛЮЧИТЬ</button>
+        <button onclick="sendMessage('OFF')">ВЫКЛЮЧИТЬ</button>
+    </div>
+
+    <div class="mqtt-status" id="mqtt-status">Подключение к брокеру...</div>
+
+    <script src="/static/paho-mqtt.js"></script>
+    <script>
+        if (typeof Paho === 'undefined') {
+            document.getElementById('mqtt-status').textContent = "paho-mqtt.js НЕ загружен ❌";
+            document.getElementById('mqtt-status').style.color = "red";
+        } else {
+            document.getElementById('mqtt-status').textContent = "paho-mqtt.js загружен ✅";
+            document.getElementById('mqtt-status').style.color = "green";
+        }
+
+        const client = new Paho.MQTT.Client("192.168.0.110", 8083, "clientId-web");
+
+        client.onConnectionLost = function (responseObject) {
+            console.log("Connection lost: " + responseObject.errorMessage);
+            document.getElementById('mqtt-status').textContent = "Соединение потеряно ❌";
+            document.getElementById('mqtt-status').style.color = "red";
+        };
+
+        client.onMessageArrived = function (message) {
+            console.log("Message arrived: " + message.payloadString);
+            const circle = document.getElementById("status-circle");
+            const text = document.getElementById("status-text");
+
+            if (message.payloadString === "ON") {
+                circle.style.backgroundColor = "green";
+                text.textContent = "Состояние: ВКЛЮЧЕНО";
+            } else if (message.payloadString === "OFF") {
+                circle.style.backgroundColor = "red";
+                text.textContent = "Состояние: ВЫКЛЮЧЕНО";
+            } else {
+                text.textContent = "Сообщение: " + message.payloadString;
+            }
+        };
+
+        client.connect({
+            onSuccess: function () {
+                console.log("Connected to MQTT broker");
+                client.subscribe("/relay/status");
+                document.getElementById('mqtt-status').textContent = "Подключено к MQTT брокеру ✅";
+                document.getElementById('mqtt-status').style.color = "green";
+            },
+            onFailure: function (err) {
+                console.error("Failed to connect:", err.errorMessage);
+                document.getElementById('mqtt-status').textContent = "Ошибка подключения ❌";
+                document.getElementById('mqtt-status').style.color = "red";
+            }
+        });
+
+        function sendMessage(command) {
+            const message = new Paho.MQTT.Message(command);
+            message.destinationName = "/relay/control";
+            client.send(message);
+        }
+    </script>
+</body>
+</html>
