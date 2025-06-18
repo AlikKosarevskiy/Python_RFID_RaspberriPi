@@ -1,80 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
-    <title>MQTT Relay Control</title>
-    <style>
-        .circle {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: red;
-            margin-bottom: 10px;
-        }
-        #status-text {
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-    </style>
+    <title>Start Page</title>
 </head>
 <body>
-    <h1>Управление реле</h1>
-
-    <div class="circle" id="status-circle"></div>
-    <div id="status-text">Ожидание...</div>
-
-    <button onclick="sendMessage('ON')">ON</button>
-    <button onclick="sendMessage('OFF')">OFF</button>
-
-   <!-- <script src="{{ url_for('static', filename='paho-mqtt.js') }}"></script>  -->
-       <script src="/static/paho-mqtt.js"></script>
-       <script>
-    try {
-        if (typeof Paho === 'undefined') {
-            document.body.innerHTML += '<p style="color:red">paho-mqtt.js НЕ загружен!</p>';
-        } else {
-            document.body.innerHTML += '<p style="color:green">paho-mqtt.js загружен ✅</p>';
-        }
-    } catch (e) {
-        document.body.innerHTML += '<p style="color:red">Ошибка загрузки paho-mqtt.js</p>';
-    }
-</script>
-    <script>
-        var client = new Paho.MQTT.Client("192.168.0.110", Number(8083), "clientId-web");
-
-        client.onConnectionLost = function (responseObject) {
-            console.log("Connection lost: " + responseObject.errorMessage);
-        };
-
-        client.onMessageArrived = function (message) {
-            console.log("Message arrived: " + message.payloadString);
-            var circle = document.getElementById("status-circle");
-            var text = document.getElementById("status-text");
-            if (message.payloadString === "ON") {
-                circle.style.backgroundColor = "green";
-                text.textContent = "Состояние: ВКЛЮЧЕНО";
-            } else if (message.payloadString === "OFF") {
-                circle.style.backgroundColor = "red";
-                text.textContent = "Состояние: ВЫКЛЮЧЕНО";
-            } else {
-                text.textContent = "Сообщение: " + message.payloadString;
-            }
-        };
-
-        client.connect({
-            onSuccess: function () {
-                console.log("Connected to MQTT broker");
-                client.subscribe("/relay/status");
-            },
-            onFailure: function (err) {
-                console.error("Failed to connect:", err.errorMessage);
-            }
-        });
-
-        function sendMessage(command) {
-            var message = new Paho.MQTT.Message(command);
-            message.destinationName = "/relay/control";
-            client.send(message);
-        }
-    </script>
+    <h1>Welcome!</h1>
+    <p><a href="{{ url_for('relay') }}">Relay Control</a></p>
+    <p><a href="{{ url_for('stats') }}">Statistics & Credits</a></p>
 </body>
 </html>
