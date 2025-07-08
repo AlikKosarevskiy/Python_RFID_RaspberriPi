@@ -330,7 +330,7 @@ if (relaysOn && relayOnTime > 0 && millis() - relayOnTime >= duration) {
       lastAnimTime = now;
     }
   }
-
+// 485 NETRONIX
 while (Serial2.available()) {
     uint8_t b = Serial2.read();
     if (packetIndex < sizeof(packetBuffer)) {
